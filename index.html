@@ -53,9 +53,8 @@
         }
 
         .btn-clear { background-color: #8E8E93; color: white; }
-        .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; font-size: 18px; margin-bottom: 20px; }
+        .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; font-size: 18px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,122,255,0.2); }
 
-        /* iOS 提示區塊樣式 */
         .ios-hint {
             width: 100%;
             background-color: var(--ios-hint-bg);
@@ -66,22 +65,8 @@
             box-sizing: border-box;
         }
 
-        .ios-hint h2 {
-            margin-top: 0;
-            font-size: 15px;
-            color: var(--danger-color);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .ios-hint ol {
-            margin: 10px 0 0 20px;
-            padding: 0;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #3A3A3C;
-        }
+        .ios-hint h2 { margin-top: 0; font-size: 15px; color: var(--danger-color); display: flex; align-items: center; gap: 5px; }
+        .ios-hint ol { margin: 10px 0 0 20px; padding: 0; font-size: 14px; line-height: 1.6; color: #3A3A3C; }
 
         /* 相機層 */
         #camera-layer {
@@ -108,10 +93,25 @@
             cursor: pointer;
         }
 
+        /* 歷史紀錄區 */
         .history-section { width: 100%; }
+        .history-title { font-size: 14px; color: #8E8E93; margin-bottom: 10px; font-weight: bold; }
         .thumb-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .thumb-item { background: white; padding: 5px; border-radius: 8px; text-align: center; font-size: 11px; }
+        
+        .thumb-item { 
+            background: white; 
+            padding: 5px; 
+            border-radius: 8px; 
+            text-align: center; 
+            font-size: 11px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer; /* 顯示手型，提示可點擊 */
+        }
+        
+        .thumb-item:active { opacity: 0.6; } /* 點擊時的視覺回饋 */
+
         .thumb-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
+        .thumb-item span { display: block; margin-top: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
         canvas { display: none; }
     </style>
@@ -134,14 +134,14 @@
         <h2>💡 iPhone 使用重要提示</h2>
         <p style="margin: 5px 0; font-size: 14px; font-weight: bold;">若要正常存檔，請先將此網頁設為桌面圖示：</p>
         <ol>
-            <li>點擊 Safari 下方的<b>「分享」</b>按鈕 (正方形向上箭頭)。</li>
-            <li>向上滑動選單，點選<b>「加入主畫面」</b>。</li>
-            <li>點擊右上角<b>「新增」</b>。</li>
-            <li>關閉瀏覽器，由桌面新的 <b>「快遞貨物拍照」</b> 圖示開啟。</li>
+            <li>點擊 Safari 下方的<b>「分享」</b>按鈕。</li>
+            <li>選擇<b>「加入主畫面」</b>並點擊<b>「新增」</b>。</li>
+            <li>由桌面的 <b>「快遞貨物拍照」</b> 圖示開啟。</li>
         </ol>
     </div>
 
     <div class="history-section">
+        <div class="history-title">近期拍攝 (點擊縮圖可刪除紀錄)</div>
         <div class="thumb-container" id="thumb-list"></div>
     </div>
 
@@ -162,9 +162,21 @@
         function updateThumbs() {
             const container = document.getElementById('thumb-list');
             container.innerHTML = '';
-            photoHistory.slice(-3).reverse().forEach(item => {
+            // 取得最後三張並反轉顯示
+            const displayedPhotos = photoHistory.slice(-3).reverse();
+            
+            displayedPhotos.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'thumb-item';
+                // 點擊事件：直接詢問是否刪除
+                div.onclick = function() {
+                    if (confirm(`確定要從紀錄中刪除「${item.name}」嗎？\n(這不會刪除已下載到手機的檔案)`)) {
+                        // 計算在原始數組中的索引並刪除
+                        const originalIndex = photoHistory.length - 1 - index;
+                        photoHistory.splice(originalIndex, 1);
+                        updateThumbs();
+                    }
+                };
                 div.innerHTML = `<img src="${item.data}"><span>${item.name}</span>`;
                 container.appendChild(div);
             });
@@ -177,7 +189,6 @@
             if (!cargoId) { alert('請先輸入貨物編號'); return; }
 
             try {
-                // 設定為穩定的 Full HD 參數
                 const constraints = {
                     video: { facingMode: "environment", width: 1920, height: 1080 }
                 };
@@ -185,7 +196,7 @@
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('camera-layer').style.display = 'flex';
             } catch (e) {
-                alert('相機啟動失敗，請確認是否已允許相機權限。');
+                alert('相機啟動失敗，請確認是否已允許權限並從主畫面開啟。');
             }
         }
 
@@ -203,6 +214,8 @@
             const fileName = `${cargoId}-${serialMap[cargoId]}.jpg`;
 
             const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            
+            // 執行下載
             const link = document.createElement('a');
             link.href = dataUrl;
             link.download = fileName;
@@ -210,11 +223,12 @@
             link.click();
             document.body.removeChild(link);
 
+            // 紀錄到歷史中
             photoHistory.push({ name: fileName, data: dataUrl });
             updateThumbs();
 
             setTimeout(() => {
-                if (!confirm(`已存：${fileName}\n繼續拍攝？`)) {
+                if (!confirm(`已存：${fileName}\n繼續拍攝「${cargoId}」？`)) {
                     if (stream) stream.getTracks().forEach(t => t.stop());
                     document.getElementById('camera-layer').style.display = 'none';
                 }
@@ -222,6 +236,8 @@
         }
 
         function clearInput() { document.getElementById('cargoId').value = ''; }
+        
+        // 初始化載入
         updateThumbs();
     </script>
 </body>
