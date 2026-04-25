@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>快遞貨物拍照紀錄</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --danger-color: #FF3B30;
+            --bg-color: #F2F2F7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #1C1C1E;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            color: #8E8E93;
+        }
+
+        .input-group {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 15px;
+            border: 1px solid #C7C7CC;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active { opacity: 0.7; }
+
+        .btn-clear { background-color: #C7C7CC; color: white; }
+        .btn-main { background-color: var(--primary-color); color: white; width: 100%; font-size: 20px; padding: 20px; }
+
+        /* 相機與彈窗介面 */
+        #camera-layer {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: black;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        video { width: 100%; flex-grow: 1; object-fit: cover; }
+
+        .camera-controls {
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            background: rgba(0,0,0,0.8);
+        }
+
+        .shutter-btn {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            border: 5px solid white;
+            background: var(--danger-color);
+        }
+
+        /* 歷史紀錄區 */
+        .history-section {
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .history-title { font-size: 16px; color: #8E8E93; margin-bottom: 10px; }
+
+        .thumb-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .thumb-item {
+            background: white;
+            padding: 5px;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+        }
+
+        .thumb-item img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .thumb-item span {
+            font-size: 10px;
+            display: block;
+            word-break: break-all;
+            margin-top: 5px;
+            color: #3A3A3C;
+        }
+
+        /* 隱藏 Canvas */
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>快遞貨物拍照紀錄</h1>
+        <p>快遞機放組邱垂霖製作</p>
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="cargoId" placeholder="輸入貨物編號" maxlength="25">
+        <button class="btn btn-clear" onclick="clearInput()">清除</button>
+    </div>
+
+    <button class="btn btn-main" onclick="startCamera()">開始拍照</button>
+
+    <div class="history-section">
+        <div class="history-title">最近拍的 3 張照片 (長按刪除)</div>
+        <div id="thumb-list" class="thumb-container"></div>
+    </div>
+
+    <div id="camera-layer">
+        <video id="video" autoplay playsinline></video>
+        <div class="camera-controls">
+            <div class="shutter-btn" onclick="takePhoto()"></div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        let stream = null;
+        let photoHistory = JSON.parse(localStorage.getItem('photoHistory') || '[]');
+        let serialMap = JSON.parse(localStorage.getItem('serialMap') || '{}');
+
+        // 更新縮圖顯示
+        function updateThumbs() {
+            const container = document.getElementById('thumb-list');
+            container.innerHTML = '';
+            // 只取最後三張
+            const lastThree = photoHistory.slice(-3).reverse();
+            
+            lastThree.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'thumb-item';
+                div.innerHTML = `
+                    <img src="${item.data}" alt="thumb">
+                    <span>${item.name}</span>
+                `;
+                
+                // 實作長按刪除
+                let timer;
+                div.addEventListener('touchstart', () => {
+                    timer = setTimeout(() => {
+                        if(confirm('確定要刪除這張照片嗎？')) {
+                            deletePhoto(photoHistory.length - 1 - index);
+                        }
+                    }, 800);
+                });
+                div.addEventListener('touchend', () => clearTimeout(timer));
+                
+                container.appendChild(div);
+            });
+            localStorage.setItem('photoHistory', JSON.stringify(photoHistory));
+            localStorage.setItem('serialMap', JSON.stringify(serialMap));
+        }
+
+        function clearInput() {
+            document.getElementById('cargoId').value = '';
+        }
+
+        async function startCamera() {
+            const cargoId = document.getElementById('cargoId').value.trim();
+            if (!cargoId) {
+                alert('請先輸入貨物編號');
+                return;
+            }
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: "environment" } }, // 強制後鏡頭
+                    audio: false
+                });
+            } catch (e) {
+                // 如果強制後鏡頭失敗（如電腦測試），則嘗試一般開啟
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            }
+            
+            document.getElementById('video').srcObject = stream;
+            document.getElementById('camera-layer').style.display = 'flex';
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('camera-layer').style.display = 'none';
+        }
+
+        function takePhoto() {
+            const cargoId = document.getElementById('cargoId').value.trim();
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            // 設定畫布大小與影片一致
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // 處理流水號
+            if (!serialMap[cargoId]) serialMap[cargoId] = 0;
+            serialMap[cargoId]++;
+            const fileName = `${cargoId}-${serialMap[cargoId]}.jpg`;
+
+            // 下載檔案
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = dataUrl;
+            link.click();
+
+            // 紀錄歷史
+            photoHistory.push({ name: fileName, data: dataUrl });
+            updateThumbs();
+
+            // 詢問下一步
+            setTimeout(() => {
+                if (confirm(`已儲存：${fileName}\n要繼續拍攝這件貨物嗎？`)) {
+                    // 繼續拍照，不關閉相機
+                } else {
+                    stopCamera();
+                }
+            }, 300);
+        }
+
+        function deletePhoto(index) {
+            photoHistory.splice(index, 1);
+            updateThumbs();
+        }
+
+        // 初始化
+        updateThumbs();
+    </script>
+</body>
+</html>
