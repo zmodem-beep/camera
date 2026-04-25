@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>快遞貨物拍照紀錄 (Android 修正版)</title>
+    <title>快遞貨物拍照紀錄</title>
     <style>
         :root {
             --primary-color: #007AFF;
             --danger-color: #FF3B30;
             --bg-color: #F2F2F7;
+            --ios-hint-bg: #FFFFFF;
         }
 
         body {
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
             padding: 20px;
@@ -23,14 +24,14 @@
         }
 
         .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { margin: 0; font-size: 22px; }
+        .header h1 { margin: 0; font-size: 22px; color: #1C1C1E; }
         .header p { margin: 5px 0 0; font-size: 13px; color: #8E8E93; }
 
         .input-group {
             width: 100%;
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         input[type="text"] {
@@ -39,6 +40,7 @@
             border: 2px solid #C7C7CC;
             border-radius: 10px;
             font-size: 16px;
+            outline: none;
         }
 
         .btn {
@@ -47,51 +49,66 @@
             border-radius: 10px;
             font-size: 16px;
             font-weight: bold;
+            cursor: pointer;
         }
 
         .btn-clear { background-color: #8E8E93; color: white; }
-        .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; }
+        .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; font-size: 18px; margin-bottom: 20px; }
 
-        /* 相機層核心修正 */
+        /* iOS 提示區塊樣式 */
+        .ios-hint {
+            width: 100%;
+            background-color: var(--ios-hint-bg);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .ios-hint h2 {
+            margin-top: 0;
+            font-size: 15px;
+            color: var(--danger-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ios-hint ol {
+            margin: 10px 0 0 20px;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #3A3A3C;
+        }
+
+        /* 相機層 */
         #camera-layer {
             display: none;
             position: fixed;
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background: #000;
             z-index: 9999;
             flex-direction: column;
         }
 
-        #video {
-            width: 100%;
-            height: 75vh; /* 限制影片高度只佔 75%，保留下方空間 */
-            object-fit: contain;
-            background: #000;
-        }
+        #video { width: 100%; height: 75vh; object-fit: contain; background: #000; }
 
         .camera-controls {
-            width: 100%;
-            height: 25vh; /* 強制按鈕區佔 25% */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 100%; height: 25vh;
+            display: flex; justify-content: center; align-items: center;
             background: #1C1C1E;
-            position: relative;
         }
 
         .shutter-btn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 5px solid #FFF;
+            width: 80px; height: 80px;
+            border-radius: 50%; border: 5px solid #FFF;
             background: var(--danger-color);
-            display: block;
             cursor: pointer;
-            z-index: 10001; /* 確保在最上層 */
         }
 
-        .history-section { width: 100%; margin-top: 20px; }
+        .history-section { width: 100%; }
         .thumb-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .thumb-item { background: white; padding: 5px; border-radius: 8px; text-align: center; font-size: 11px; }
         .thumb-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
@@ -107,11 +124,22 @@
     </div>
 
     <div class="input-group">
-        <input type="text" id="cargoId" placeholder="輸入貨物編號">
+        <input type="text" id="cargoId" placeholder="輸入貨物編號" maxlength="25">
         <button class="btn btn-clear" onclick="clearInput()">清除</button>
     </div>
 
     <button class="btn btn-main" onclick="startCamera()">開始拍照</button>
+
+    <div class="ios-hint">
+        <h2>💡 iPhone 使用重要提示</h2>
+        <p style="margin: 5px 0; font-size: 14px; font-weight: bold;">若要正常存檔，請先將此網頁設為桌面圖示：</p>
+        <ol>
+            <li>點擊 Safari 下方的<b>「分享」</b>按鈕 (正方形向上箭頭)。</li>
+            <li>向上滑動選單，點選<b>「加入主畫面」</b>。</li>
+            <li>點擊右上角<b>「新增」</b>。</li>
+            <li>關閉瀏覽器，由桌面新的 <b>「快遞貨物拍照」</b> 圖示開啟。</li>
+        </ol>
+    </div>
 
     <div class="history-section">
         <div class="thumb-container" id="thumb-list"></div>
@@ -120,7 +148,7 @@
     <div id="camera-layer">
         <video id="video" autoplay playsinline></video>
         <div class="camera-controls">
-            <div class="shutter-btn" onclick="takePhoto()" id="shutter"></div>
+            <div class="shutter-btn" onclick="takePhoto()"></div>
         </div>
     </div>
 
@@ -134,7 +162,7 @@
         function updateThumbs() {
             const container = document.getElementById('thumb-list');
             container.innerHTML = '';
-            photoHistory.slice(-3).reverse().forEach((item, index) => {
+            photoHistory.slice(-3).reverse().forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'thumb-item';
                 div.innerHTML = `<img src="${item.data}"><span>${item.name}</span>`;
@@ -149,19 +177,15 @@
             if (!cargoId) { alert('請先輸入貨物編號'); return; }
 
             try {
-                // Android 高清請求
+                // 設定為穩定的 Full HD 參數
                 const constraints = {
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    }
+                    video: { facingMode: "environment", width: 1920, height: 1080 }
                 };
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('camera-layer').style.display = 'flex';
             } catch (e) {
-                alert('開啟相機失敗：' + e.name);
+                alert('相機啟動失敗，請確認是否已允許相機權限。');
             }
         }
 
@@ -178,7 +202,7 @@
             serialMap[cargoId]++;
             const fileName = `${cargoId}-${serialMap[cargoId]}.jpg`;
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
             const link = document.createElement('a');
             link.href = dataUrl;
             link.download = fileName;
@@ -190,7 +214,7 @@
             updateThumbs();
 
             setTimeout(() => {
-                if (!confirm(`已存：${fileName}\n繼續拍這件？`)) {
+                if (!confirm(`已存：${fileName}\n繼續拍攝？`)) {
                     if (stream) stream.getTracks().forEach(t => t.stop());
                     document.getElementById('camera-layer').style.display = 'none';
                 }
