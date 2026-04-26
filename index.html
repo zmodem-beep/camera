@@ -9,33 +9,32 @@
         body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
         .header { text-align: center; width: 100%; padding-top: env(safe-area-inset-top); margin-bottom: 10px; }
         .header h1 { margin: 0; font-size: 20px; }
-        .iphone-warning { width: 100%; background: #FFE5E5; border: 1px solid var(--danger-color); border-radius: 10px; padding: 10px; margin-bottom: 15px; font-size: 13px; color: #D32F2F; font-weight: bold; }
-
+        
+        /* 輸入區 */
         .input-group { width: 100%; display: flex; gap: 10px; margin-bottom: 15px; }
         input[type="text"] { flex-grow: 1; padding: 12px; border: 2px solid #C7C7CC; border-radius: 10px; font-size: 18px; outline: none; }
-        .btn-clear { padding: 12px; border: none; border-radius: 10px; background: #8E8E93; color: white; font-weight: bold; }
+        .btn-clear { padding: 12px; border: none; border-radius: 10px; background: #8E8E93; color: white; }
         .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
 
         /* 相機層 */
         #camera-layer { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; flex-direction: column; }
         #video { width: 100%; height: 70vh; object-fit: contain; }
-        
         .zoom-controls { width: 100%; background: rgba(0,0,0,0.85); padding: 10px 0; display: flex; flex-direction: column; align-items: center; color: white; }
-        .camera-footer { width: 100%; height: 20vh; display: flex; justify-content: space-around; align-items: center; background: #1C1C1E; }
-        .shutter-btn { width: 80px; height: 80px; border-radius: 50%; border: 5px solid #FFF; background: var(--danger-color); }
-        .exit-camera { color: white; font-size: 16px; font-weight: bold; padding: 10px; }
+        .camera-footer { width: 100%; height: 15vh; display: flex; justify-content: space-around; align-items: center; background: #1C1C1E; }
+        .shutter-btn { width: 75px; height: 75px; border-radius: 50%; border: 5px solid #FFF; background: var(--danger-color); }
+        .exit-camera { color: white; font-size: 16px; font-weight: bold; }
 
-        /* 詢問視窗區 - 確保在相機層內部以解決遮擋 */
-        #custom-dialog-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; }
-        #custom-confirm {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white; padding: 25px; border-radius: 20px; width: 85%; text-align: center;
+        /* 自定義詢問視窗 - 放在相機層內避免遮擋 */
+        #confirm-box { 
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; padding: 25px; border-radius: 20px; width: 80%; z-index: 10000; text-align: center;
         }
-        .confirm-btn-group { display: flex; gap: 15px; margin-top: 20px; }
-        .c-btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; }
+        .c-btn-group { display: flex; gap: 15px; margin-top: 20px; }
+        .c-btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; }
         .c-btn-next { background: var(--primary-color); color: white; }
         .c-btn-stop { background: #E5E5EA; color: #3A3A3C; }
 
+        /* 縮圖紀錄 */
         .history-section { width: 100%; }
         .thumb-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .thumb-item { background: white; padding: 5px; border-radius: 8px; text-align: center; font-size: 11px; }
@@ -50,37 +49,32 @@
         <p>快遞機放組邱垂霖製作</p>
     </div>
 
-    <div class="iphone-warning">
-        ⚠️ iPhone 無法自動存檔，建議改用 Android 手機。
-    </div>
-
     <div class="input-group">
         <input type="text" id="cargoId" placeholder="輸入貨物編號">
         <button class="btn-clear" onclick="document.getElementById('cargoId').value=''">清除</button>
     </div>
 
-    <button class="btn-main" onclick="startCamera()">開始拍照 (建議 Android)</button>
+    <button class="btn-main" onclick="startCamera()">開始拍照</button>
 
     <div class="history-section">
-        <p style="font-size: 14px; font-weight: bold; color: #8E8E93; margin-bottom: 8px;">最近拍攝紀錄</p>
+        <p style="font-size: 14px; font-weight: bold; color: #8E8E93;">最近拍攝</p>
         <div class="thumb-container" id="thumb-list"></div>
-    </div>
-
-    <div id="custom-dialog-bg">
-        <div id="custom-confirm">
-            <p id="confirm-msg" style="margin: 0; font-size: 18px; font-weight: bold; line-height: 1.4; color: #000;"></p>
-            <div class="confirm-btn-group">
-                <button class="c-btn c-btn-next" onclick="continuePhoto()">繼續拍攝</button>
-                <button class="c-btn c-btn-stop" onclick="stopCamera()">結束/返回</button>
-            </div>
-        </div>
     </div>
 
     <div id="camera-layer">
         <video id="video" autoplay playsinline muted></video>
+        
+        <div id="confirm-box">
+            <p id="confirm-msg" style="margin: 0; font-size: 16px; font-weight: bold; color: #000;"></p>
+            <div class="c-btn-group">
+                <button class="c-btn c-btn-next" onclick="continuePhoto()">繼續拍攝</button>
+                <button class="c-btn c-btn-stop" onclick="stopCamera()">結束/返回</button>
+            </div>
+        </div>
+
         <div class="zoom-controls">
-            <span>放大倍率: <span id="zoom-val">1.0</span>x</span>
-            <input type="range" id="zoom-range" min="1" max="5" step="0.1" value="1" style="width:85%">
+            <span>倍率: <span id="zoom-val">1.0</span>x</span>
+            <input type="range" id="zoom-range" min="1" max="5" step="0.1" value="1" style="width:80%">
         </div>
         <div class="camera-footer">
             <div class="exit-camera" onclick="stopCamera()">取消</div>
@@ -94,23 +88,20 @@
     <script>
         let stream = null;
         let videoTrack = null;
-        // 僅從 localStorage 載入紀錄，但不儲存大圖
         let photoHistory = JSON.parse(localStorage.getItem('photoHistory') || '[]');
         let serialMap = JSON.parse(localStorage.getItem('serialMap') || '{}');
 
         function updateThumbs() {
             const container = document.getElementById('thumb-list');
             container.innerHTML = '';
-            // 只顯示最近 3 張
             photoHistory.slice(-3).reverse().forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'thumb-item';
                 div.innerHTML = `<img src="${item.data}"><span>${item.name}</span>`;
                 container.appendChild(div);
             });
-            // 關鍵優化：只把最近 3 張縮圖存入 localStorage，防止容量爆掉
-            const miniHistory = photoHistory.slice(-3);
-            localStorage.setItem('photoHistory', JSON.stringify(miniHistory));
+            // 存入 LocalStorage 前確保只存最近 3 筆且皆為縮圖
+            localStorage.setItem('photoHistory', JSON.stringify(photoHistory.slice(-3)));
             localStorage.setItem('serialMap', JSON.stringify(serialMap));
         }
 
@@ -118,18 +109,13 @@
             const cargoId = document.getElementById('cargoId').value.trim();
             if (!cargoId) { alert('請輸入貨物編號'); return; }
             try {
-                const constraints = { video: { facingMode: "environment", width: { ideal: 2304 }, height: { ideal: 1296 } } };
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment", width: { ideal: 2304 }, height: { ideal: 1296 } } 
+                });
                 document.getElementById('video').srcObject = stream;
                 videoTrack = stream.getVideoTracks()[0];
                 document.getElementById('camera-layer').style.display = 'flex';
-                
-                if (videoTrack.getCapabilities && videoTrack.getCapabilities().zoom) {
-                    const caps = videoTrack.getCapabilities();
-                    const zr = document.getElementById('zoom-range');
-                    zr.min = caps.zoom.min; zr.max = caps.zoom.max; zr.step = caps.zoom.step || 0.1;
-                }
-            } catch (e) { alert('相機啟動失敗'); }
+            } catch (e) { alert('啟動失敗'); }
         }
 
         document.getElementById('zoom-range').oninput = async function(e) {
@@ -146,6 +132,7 @@
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             
+            // 1. 抓取大圖
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
@@ -153,47 +140,44 @@
 
             if (!serialMap[cargoId]) serialMap[cargoId] = 0;
             serialMap[cargoId]++;
-            
             const fileName = `${cargoId}-${serialMap[cargoId]}.jpg`;
-            const fullDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const fullDataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
-            // 生成小尺寸縮圖 (用於歷史紀錄顯示，避免佔用 localStorage 空間)
+            // 2. 製作極小縮圖 (避免記憶體爆掉)
             const thumbCanvas = document.createElement('canvas');
-            thumbCanvas.width = 200;
-            thumbCanvas.height = 200;
-            thumbCanvas.getContext('2d').drawImage(canvas, 0, 0, 200, 200);
-            const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.6);
+            thumbCanvas.width = 150;
+            thumbCanvas.height = 150;
+            thumbCanvas.getContext('2d').drawImage(canvas, 0, 0, 150, 150);
+            const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.5);
 
-            // 更新歷史紀錄 (存縮圖而非大圖)
-            photoHistory.push({ name: fileName, data: thumbDataUrl });
+            // 3. 更新紀錄並立即顯示
+            photoHistory.push({ name: fileName, data: thumbData });
             updateThumbs();
 
-            // 執行大圖下載
-            const link = document.createElement('a');
-            link.href = fullDataUrl;
-            link.download = fileName;
+            // 4. 先顯示對話框
+            document.getElementById('confirm-msg').innerText = `已儲存：${fileName}\n要繼續拍這件貨物嗎？`;
+            document.getElementById('confirm-box').style.display = 'block';
 
-            // 彈出詢問對話框 (先顯示介面，再觸發下載)
-            document.getElementById('confirm-msg').innerText = `已拍下：${fileName}\n要繼續拍攝嗎？`;
-            document.getElementById('custom-dialog-bg').style.display = 'block';
-
+            // 5. 最後觸發下載
             setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = fullDataUrl;
+                link.download = fileName;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-            }, 300);
+            }, 500);
         }
 
         function continuePhoto() {
-            document.getElementById('custom-dialog-bg').style.display = 'none';
+            document.getElementById('confirm-box').style.display = 'none';
         }
 
         function stopCamera() {
             if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-            document.getElementById('custom-dialog-bg').style.display = 'none';
+            document.getElementById('confirm-box').style.display = 'none';
             document.getElementById('camera-layer').style.display = 'none';
             document.getElementById('zoom-range').value = 1;
-            document.getElementById('zoom-val').innerText = "1.0";
             document.getElementById('video').style.transform = "scale(1)";
         }
 
