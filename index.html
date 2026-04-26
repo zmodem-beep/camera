@@ -96,7 +96,7 @@
 
     <div class="iphone-warning">
         <h2>⚠️ 設備相容性警告</h2>
-        <p>由於 iOS 系統安全限制，本程式在新款 iPhone 上可能【無法正常存檔】且【無法變焦】。
+        <p>由於 iOS 系統安全限制，本程式在新款iPhone上可能【無法正常存檔】且【無法變焦】。
         </p>
     </div>
 
@@ -201,9 +201,9 @@
 
             // 製作小縮圖避免記憶體爆炸
             const thumbCanvas = document.createElement('canvas');
-            thumbCanvas.width = 320;
-            thumbCanvas.height = 180;
-            thumbCanvas.getContext('2d').drawImage(canvas, 0, 0, 320, 180);
+            thumbCanvas.width = 180;
+            thumbCanvas.height = 320;
+            thumbCanvas.getContext('2d').drawImage(canvas, 0, 0, 180, 320);
             const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.6);
 
             // 1. 更新紀錄並立即顯示
