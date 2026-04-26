@@ -82,7 +82,7 @@
         .history-section { width: 100%; }
         .thumb-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .thumb-item { background: white; padding: 5px; border-radius: 8px; text-align: center; font-size: 11px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .thumb-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
+        .thumb-item img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 4px; }
         .thumb-item span { display: block; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         canvas { display: none; }
     </style>
@@ -197,14 +197,14 @@
             if (!serialMap[cargoId]) serialMap[cargoId] = 0;
             serialMap[cargoId]++;
             const fileName = `${cargoId}-${serialMap[cargoId]}.jpg`;
-            const fullDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+            const fullDataUrl = canvas.toDataURL('image/jpeg', 0.95);
 
             // 製作小縮圖避免記憶體爆炸
             const thumbCanvas = document.createElement('canvas');
-            thumbCanvas.width = 150;
-            thumbCanvas.height = 150;
-            thumbCanvas.getContext('2d').drawImage(canvas, 0, 0, 150, 150);
-            const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.5);
+            thumbCanvas.width = 320;
+            thumbCanvas.height = 180;
+            thumbCanvas.getContext('2d').drawImage(canvas, 0, 0, 320, 180);
+            const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.6);
 
             // 1. 更新紀錄並立即顯示
             photoHistory.push({ name: fileName, data: thumbData });
