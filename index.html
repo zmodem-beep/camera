@@ -10,7 +10,7 @@
         :root { --primary-color: #007AFF; --danger-color: #FF3B30; --bg-color: #F2F2F7; }
         
         body { 
-            font-family: -apple-system, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background-color: var(--bg-color); 
             margin: 0; 
             padding: 10px 20px; 
@@ -27,7 +27,7 @@
             padding-top: calc(15px + env(safe-area-inset-top)); 
             margin-bottom: 15px; 
         }
-        .header h1 { margin: 0; font-size: 22px; }
+        .header h1 { margin: 0; font-size: 22px; color: #1C1C1E; }
         .header p { margin: 5px 0 0; font-size: 13px; color: #8E8E93; }
 
         .input-group { width: 100%; display: flex; gap: 10px; margin-bottom: 15px; }
@@ -35,17 +35,29 @@
         
         .btn { padding: 12px 20px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-clear { background-color: #8E8E93; color: white; }
-        .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; font-size: 18px; margin-bottom: 15px; }
+        .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; font-size: 18px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,122,255,0.2); }
         
-        .ios-hint { width: 100%; background: #FFF; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; font-size: 14px; line-height: 1.6; box-sizing: border-box; }
+        /* 詳細的 iOS 提示區塊 */
+        .ios-hint { 
+            width: 100%; 
+            background: #FFF; 
+            border-radius: 12px; 
+            padding: 15px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            margin-bottom: 20px; 
+            box-sizing: border-box;
+        }
+        .ios-hint h2 { margin-top: 0; font-size: 15px; color: var(--danger-color); display: flex; align-items: center; gap: 5px; }
+        .ios-hint ol { margin: 10px 0 0 20px; padding: 0; font-size: 14px; line-height: 1.6; color: #3A3A3C; }
+        .ios-hint b { color: #000; }
 
         #camera-layer { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; flex-direction: column; }
-        #video { width: 100%; height: 70vh; object-fit: contain; background: #000; }
+        #video { width: 100%; height: 70vh; object-fit: contain; background: #000; transition: transform 0.1s ease-out; }
         
         .zoom-controls { width: 100%; background: rgba(0,0,0,0.95); padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .zoom-label { color: white; font-size: 14px; font-weight: bold; }
-        input[type="range"] { width: 85%; height: 40px; -webkit-appearance: none; background: #444; border-radius: 10px; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; background: white; border-radius: 50%; }
+        input[type="range"] { width: 85%; height: 40px; -webkit-appearance: none; background: #444; border-radius: 10px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; background: white; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
 
         .camera-footer { width: 100%; height: 15vh; display: flex; justify-content: center; align-items: center; background: #1C1C1E; padding-bottom: env(safe-area-inset-bottom); }
         .shutter-btn { width: 75px; height: 75px; border-radius: 50%; border: 5px solid #FFF; background: var(--danger-color); }
@@ -72,9 +84,15 @@
     <button class="btn btn-main" onclick="startCamera()">開始拍照</button>
 
     <div class="ios-hint">
-        <b>💡 iPhone 使用必看：</b><br>
-        1. 必須「加入主畫面」才能自動存檔。<br>
-        2. 若變焦無效，請後退一點拍攝，本程式畫質高，存檔後放大看也很清楚。
+        <h2>💡 iPhone 使用重要提示</h2>
+        <p style="margin: 5px 0; font-size: 14px; font-weight: bold;">若要正常存檔且隱藏網址列，請依照下列步驟：</p>
+        <ol>
+            <li>點擊 Safari 瀏覽器下方的<b>「分享」</b>按鈕 (正方形向上箭頭)。</li>
+            <li>向上滑動選單，點選<b>「加入主畫面」</b>。</li>
+            <li>點擊右上角<b>「新增」</b>。</li>
+            <li>關閉 Safari，由桌面新的 <b>「快遞貨物拍照」</b> 圖示開啟。</li>
+            <li><b>近拍提示：</b>若標籤模糊，請<b>後退 15 公分</b>並使用放大滑桿。</li>
+        </ol>
     </div>
 
     <div class="history-section">
@@ -115,14 +133,14 @@
 
         async function startCamera() {
             const cargoId = document.getElementById('cargoId').value.trim();
-            if (!cargoId) { alert('請輸入貨物編號'); return; }
+            if (!cargoId) { alert('請先輸入貨物編號'); return; }
 
-            // 先顯示黑層，再抓取串流，避免 iOS 初始化延遲黑屏
             document.getElementById('camera-layer').style.display = 'flex';
 
             if (stream && stream.active) return;
 
             try {
+                // 設定為 300 萬畫素 (16:9)
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "environment", width: { ideal: 2304 }, height: { ideal: 1296 } } 
                 });
@@ -130,21 +148,20 @@
                 video.srcObject = stream;
                 videoTrack = stream.getVideoTracks()[0];
                 
-                // 變焦偵測優化
                 setTimeout(() => {
                     try {
                         const caps = videoTrack.getCapabilities();
                         const zoomRange = document.getElementById('zoom-range');
-                        if (caps.zoom) {
+                        if (caps && caps.zoom) {
                             zoomRange.min = caps.zoom.min;
                             zoomRange.max = caps.zoom.max;
                             zoomRange.step = caps.zoom.step || 0.1;
                         }
-                    } catch(e) { console.log("Zoom not supported natively"); }
+                    } catch(e) {}
                 }, 1000);
 
             } catch (e) { 
-                alert('相機啟動失敗，請確認權限或嘗試重開主畫面圖示。');
+                alert('相機啟動失敗，請確認是否已從主畫面開啟並允許相機權限。');
                 document.getElementById('camera-layer').style.display = 'none';
             }
         }
@@ -154,10 +171,9 @@
             document.getElementById('zoom-val').innerText = val.toFixed(1);
             if (videoTrack) {
                 try {
-                    // 強制應用約束，解決部分 iOS 版本滑動無反應問題
                     await videoTrack.applyConstraints({ advanced: [{ zoom: val }] });
                 } catch (err) {
-                    // 若硬體不支持，嘗試 CSS 數位放大做為補償
+                    // 若硬體 API 不支援，則使用 CSS 數位放大補償
                     document.getElementById('video').style.transform = `scale(${val})`;
                 }
             }
@@ -168,13 +184,11 @@
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             
-            // 如果使用了 CSS 縮放，也要反映到畫布上
-            const zoomVal = parseFloat(document.getElementById('zoom-range').value);
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             
-            // 繪製邏輯優化
+            // 繪製照片
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             if (!serialMap[cargoId]) serialMap[cargoId] = 0;
@@ -192,7 +206,6 @@
             photoHistory.push({ name: fileName, data: dataUrl });
             updateThumbs();
 
-            // 解決黑屏核心：不要關閉鏡流，只隱藏介面視窗
             setTimeout(() => {
                 if (!confirm(`已存：${fileName}\n繼續拍攝「${cargoId}」？`)) {
                     stopCamera();
