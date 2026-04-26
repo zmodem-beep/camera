@@ -197,7 +197,7 @@
             if (!serialMap[cargoId]) serialMap[cargoId] = 0;
             serialMap[cargoId]++;
             const fileName = `${cargoId}-${serialMap[cargoId]}.jpg`;
-            const fullDataUrl = canvas.toDataURL('image/jpeg', 1);
+            const fullDataUrl = canvas.toDataURL('image/jpeg', 1.0);
 
             // 製作小縮圖避免記憶體爆炸
             const thumbCanvas = document.createElement('canvas');
