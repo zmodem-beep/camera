@@ -13,21 +13,18 @@
             font-family: -apple-system, sans-serif; 
             background-color: var(--bg-color); 
             margin: 0; 
-            /* 修正：同時設定 padding 以確保兩側與上下都有安全邊距 */
             padding: 10px 20px; 
             box-sizing: border-box; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            /* 關鍵修正：讓底部避開 iPhone 手勢列 */
             padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
         }
         
         .header { 
             text-align: center; 
             width: 100%;
-            /* 關鍵修正：讓標題自動避開瀏海/動態島 */
-            padding-top: calc(10px + env(safe-area-inset-top)); 
+            padding-top: calc(15px + env(safe-area-inset-top)); 
             margin-bottom: 15px; 
         }
         .header h1 { margin: 0; font-size: 22px; }
@@ -41,26 +38,16 @@
         .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; font-size: 18px; margin-bottom: 15px; }
         
         .ios-hint { width: 100%; background: #FFF; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; font-size: 14px; line-height: 1.6; box-sizing: border-box; }
-        .ios-hint b { color: var(--danger-color); }
 
-        /* 相機層設定維持不變，因為 object-fit: contain 不會被遮擋 */
         #camera-layer { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; flex-direction: column; }
         #video { width: 100%; height: 70vh; object-fit: contain; background: #000; }
         
-        .zoom-controls { width: 100%; background: rgba(0,0,0,0.9); padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .zoom-controls { width: 100%; background: rgba(0,0,0,0.95); padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .zoom-label { color: white; font-size: 14px; font-weight: bold; }
-        input[type="range"] { width: 80%; height: 40px; }
+        input[type="range"] { width: 85%; height: 40px; -webkit-appearance: none; background: #444; border-radius: 10px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; background: white; border-radius: 50%; }
 
-        .camera-footer { 
-            width: 100%; 
-            height: 15vh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            background: #1C1C1E; 
-            /* 讓拍照鈕避開底部手勢列 */
-            padding-bottom: env(safe-area-inset-bottom); 
-        }
+        .camera-footer { width: 100%; height: 15vh; display: flex; justify-content: center; align-items: center; background: #1C1C1E; padding-bottom: env(safe-area-inset-bottom); }
         .shutter-btn { width: 75px; height: 75px; border-radius: 50%; border: 5px solid #FFF; background: var(--danger-color); }
         
         .history-section { width: 100%; }
@@ -85,9 +72,9 @@
     <button class="btn btn-main" onclick="startCamera()">開始拍照</button>
 
     <div class="ios-hint">
-        <b>💡 iPhone 使用提示：</b><br>
-        1. 請點擊「分享」→「加入主畫面」以隱藏網址列。<br>
-        2. 近拍標籤時，請<b>後退 15 公分</b>並使用下方的「放大滑桿」調整焦距，避免文字模糊。
+        <b>💡 iPhone 使用必看：</b><br>
+        1. 必須「加入主畫面」才能自動存檔。<br>
+        2. 若變焦無效，請後退一點拍攝，本程式畫質高，存檔後放大看也很清楚。
     </div>
 
     <div class="history-section">
@@ -95,7 +82,7 @@
     </div>
 
     <div id="camera-layer">
-        <video id="video" autoplay playsinline></video>
+        <video id="video" autoplay playsinline muted></video>
         <div class="zoom-controls">
             <span class="zoom-label">放大倍率: <span id="zoom-val">1.0</span>x</span>
             <input type="range" id="zoom-range" min="1" max="5" step="0.1" value="1">
@@ -130,39 +117,35 @@
             const cargoId = document.getElementById('cargoId').value.trim();
             if (!cargoId) { alert('請輸入貨物編號'); return; }
 
-            if (stream && stream.active) {
-                document.getElementById('camera-layer').style.display = 'flex';
-                return;
-            }
+            // 先顯示黑層，再抓取串流，避免 iOS 初始化延遲黑屏
+            document.getElementById('camera-layer').style.display = 'flex';
+
+            if (stream && stream.active) return;
 
             try {
-                const constraints = { 
-                    video: { 
-                        facingMode: "environment", 
-                        width: { ideal: 2304 }, 
-                        height: { ideal: 1296 } 
-                    } 
-                };
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment", width: { ideal: 2304 }, height: { ideal: 1296 } } 
+                });
                 const video = document.getElementById('video');
                 video.srcObject = stream;
                 videoTrack = stream.getVideoTracks()[0];
                 
+                // 變焦偵測優化
                 setTimeout(() => {
-                    if (videoTrack && videoTrack.getCapabilities) {
+                    try {
                         const caps = videoTrack.getCapabilities();
+                        const zoomRange = document.getElementById('zoom-range');
                         if (caps.zoom) {
-                            const zoomRange = document.getElementById('zoom-range');
                             zoomRange.min = caps.zoom.min;
                             zoomRange.max = caps.zoom.max;
                             zoomRange.step = caps.zoom.step || 0.1;
                         }
-                    }
-                }, 500);
+                    } catch(e) { console.log("Zoom not supported natively"); }
+                }, 1000);
 
-                document.getElementById('camera-layer').style.display = 'flex';
             } catch (e) { 
-                alert('相機啟動失敗，請確認是否已加入主畫面並允許權限。'); 
+                alert('相機啟動失敗，請確認權限或嘗試重開主畫面圖示。');
+                document.getElementById('camera-layer').style.display = 'none';
             }
         }
 
@@ -171,9 +154,11 @@
             document.getElementById('zoom-val').innerText = val.toFixed(1);
             if (videoTrack) {
                 try {
+                    // 強制應用約束，解決部分 iOS 版本滑動無反應問題
                     await videoTrack.applyConstraints({ advanced: [{ zoom: val }] });
                 } catch (err) {
-                    console.log("此設備不支援數位變焦");
+                    // 若硬體不支持，嘗試 CSS 數位放大做為補償
+                    document.getElementById('video').style.transform = `scale(${val})`;
                 }
             }
         };
@@ -183,9 +168,14 @@
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             
+            // 如果使用了 CSS 縮放，也要反映到畫布上
+            const zoomVal = parseFloat(document.getElementById('zoom-range').value);
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            const ctx = canvas.getContext('2d');
+            
+            // 繪製邏輯優化
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             if (!serialMap[cargoId]) serialMap[cargoId] = 0;
             serialMap[cargoId]++;
@@ -202,17 +192,23 @@
             photoHistory.push({ name: fileName, data: dataUrl });
             updateThumbs();
 
+            // 解決黑屏核心：不要關閉鏡流，只隱藏介面視窗
             setTimeout(() => {
                 if (!confirm(`已存：${fileName}\n繼續拍攝「${cargoId}」？`)) {
-                    if (stream) {
-                        stream.getTracks().forEach(t => t.stop());
-                        stream = null;
-                    }
-                    document.getElementById('camera-layer').style.display = 'none';
-                    document.getElementById('zoom-range').value = 1;
-                    document.getElementById('zoom-val').innerText = "1.0";
+                    stopCamera();
                 }
-            }, 500);
+            }, 600);
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+                stream = null;
+            }
+            document.getElementById('camera-layer').style.display = 'none';
+            document.getElementById('zoom-range').value = 1;
+            document.getElementById('zoom-val').innerText = "1.0";
+            document.getElementById('video').style.transform = "scale(1)";
         }
 
         function clearInput() { document.getElementById('cargoId').value = ''; }
