@@ -10,7 +10,7 @@
         :root { --primary-color: #007AFF; --danger-color: #FF3B30; --bg-color: #F2F2F7; }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-family: -apple-system, sans-serif; 
             background-color: var(--bg-color); 
             margin: 0; 
             padding: 10px 20px; 
@@ -30,34 +30,47 @@
         .header h1 { margin: 0; font-size: 22px; color: #1C1C1E; }
         .header p { margin: 5px 0 0; font-size: 13px; color: #8E8E93; }
 
+        /* 醒目的 iPhone 警告提示 */
+        .iphone-warning { 
+            width: 100%; 
+            background: #FFE5E5; 
+            border: 2px solid var(--danger-color);
+            border-radius: 12px; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            box-sizing: border-box;
+            text-align: left;
+        }
+        .iphone-warning h2 { 
+            margin: 0 0 10px 0; 
+            font-size: 18px; 
+            color: var(--danger-color); 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        .iphone-warning p { 
+            margin: 0; 
+            font-size: 15px; 
+            line-height: 1.6; 
+            color: #D32F2F; 
+            font-weight: bold;
+        }
+
         .input-group { width: 100%; display: flex; gap: 10px; margin-bottom: 15px; }
         input[type="text"] { flex-grow: 1; padding: 12px; border: 2px solid #C7C7CC; border-radius: 10px; font-size: 16px; outline: none; }
         
         .btn { padding: 12px 20px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-clear { background-color: #8E8E93; color: white; }
-        .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; font-size: 18px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,122,255,0.2); }
-        
-        /* 詳細的 iOS 提示區塊 */
-        .ios-hint { 
-            width: 100%; 
-            background: #FFF; 
-            border-radius: 12px; 
-            padding: 15px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-            margin-bottom: 20px; 
-            box-sizing: border-box;
-        }
-        .ios-hint h2 { margin-top: 0; font-size: 15px; color: var(--danger-color); display: flex; align-items: center; gap: 5px; }
-        .ios-hint ol { margin: 10px 0 0 20px; padding: 0; font-size: 14px; line-height: 1.6; color: #3A3A3C; }
-        .ios-hint b { color: #000; }
+        .btn-main { background-color: var(--primary-color); color: white; width: 100%; padding: 18px; font-size: 18px; margin-bottom: 15px; }
 
         #camera-layer { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; flex-direction: column; }
-        #video { width: 100%; height: 70vh; object-fit: contain; background: #000; transition: transform 0.1s ease-out; }
+        #video { width: 100%; height: 70vh; object-fit: contain; background: #000; }
         
         .zoom-controls { width: 100%; background: rgba(0,0,0,0.95); padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .zoom-label { color: white; font-size: 14px; font-weight: bold; }
-        input[type="range"] { width: 85%; height: 40px; -webkit-appearance: none; background: #444; border-radius: 10px; outline: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; background: white; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        input[type="range"] { width: 85%; height: 40px; -webkit-appearance: none; background: #444; border-radius: 10px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; background: white; border-radius: 50%; }
 
         .camera-footer { width: 100%; height: 15vh; display: flex; justify-content: center; align-items: center; background: #1C1C1E; padding-bottom: env(safe-area-inset-bottom); }
         .shutter-btn { width: 75px; height: 75px; border-radius: 50%; border: 5px solid #FFF; background: var(--danger-color); }
@@ -76,24 +89,20 @@
         <p>快遞機放組邱垂霖製作</p>
     </div>
 
+    <div class="iphone-warning">
+        <h2>⚠️ 設備相容性警告</h2>
+        <p>偵測到 iPhone 使用者：<br>
+           由於 iOS 系統限制，本網頁程式在 iPhone 上【無法正常存檔】且【無法變焦】。<br><br>
+           請改用 Android (三星、小米、OPPO等) 手機以獲得完整功能。
+        </p>
+    </div>
+
     <div class="input-group">
         <input type="text" id="cargoId" placeholder="輸入貨物編號">
         <button class="btn btn-clear" onclick="clearInput()">清除</button>
     </div>
 
-    <button class="btn btn-main" onclick="startCamera()">開始拍照</button>
-
-    <div class="ios-hint">
-        <h2>💡 iPhone 使用重要提示</h2>
-        <p style="margin: 5px 0; font-size: 14px; font-weight: bold;">若要正常存檔且隱藏網址列，請依照下列步驟：</p>
-        <ol>
-            <li>點擊 Safari 瀏覽器下方的<b>「分享」</b>按鈕 (正方形向上箭頭)。</li>
-            <li>向上滑動選單，點選<b>「加入主畫面」</b>。</li>
-            <li>點擊右上角<b>「新增」</b>。</li>
-            <li>關閉 Safari，由桌面新的 <b>「快遞貨物拍照」</b> 圖示開啟。</li>
-            <li><b>近拍提示：</b>若標籤模糊，請<b>後退 15 公分</b>並使用放大滑桿。</li>
-        </ol>
-    </div>
+    <button class="btn btn-main" onclick="startCamera()">開始拍照 (建議 Android)</button>
 
     <div class="history-section">
         <div class="thumb-container" id="thumb-list"></div>
@@ -134,34 +143,17 @@
         async function startCamera() {
             const cargoId = document.getElementById('cargoId').value.trim();
             if (!cargoId) { alert('請先輸入貨物編號'); return; }
-
             document.getElementById('camera-layer').style.display = 'flex';
-
             if (stream && stream.active) return;
-
             try {
-                // 設定為 300 萬畫素 (16:9)
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "environment", width: { ideal: 2304 }, height: { ideal: 1296 } } 
                 });
                 const video = document.getElementById('video');
                 video.srcObject = stream;
                 videoTrack = stream.getVideoTracks()[0];
-                
-                setTimeout(() => {
-                    try {
-                        const caps = videoTrack.getCapabilities();
-                        const zoomRange = document.getElementById('zoom-range');
-                        if (caps && caps.zoom) {
-                            zoomRange.min = caps.zoom.min;
-                            zoomRange.max = caps.zoom.max;
-                            zoomRange.step = caps.zoom.step || 0.1;
-                        }
-                    } catch(e) {}
-                }, 1000);
-
             } catch (e) { 
-                alert('相機啟動失敗，請確認是否已從主畫面開啟並允許相機權限。');
+                alert('相機啟動失敗');
                 document.getElementById('camera-layer').style.display = 'none';
             }
         }
@@ -173,7 +165,6 @@
                 try {
                     await videoTrack.applyConstraints({ advanced: [{ zoom: val }] });
                 } catch (err) {
-                    // 若硬體 API 不支援，則使用 CSS 數位放大補償
                     document.getElementById('video').style.transform = `scale(${val})`;
                 }
             }
@@ -183,13 +174,9 @@
             const cargoId = document.getElementById('cargoId').value.trim();
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
-            
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            
-            // 繪製照片
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').drawImage(video, 0, 0);
 
             if (!serialMap[cargoId]) serialMap[cargoId] = 0;
             serialMap[cargoId]++;
@@ -207,21 +194,11 @@
             updateThumbs();
 
             setTimeout(() => {
-                if (!confirm(`已存：${fileName}\n繼續拍攝「${cargoId}」？`)) {
-                    stopCamera();
+                if (!confirm(`已存：${fileName}\n繼續拍攝？`)) {
+                    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+                    document.getElementById('camera-layer').style.display = 'none';
                 }
             }, 600);
-        }
-
-        function stopCamera() {
-            if (stream) {
-                stream.getTracks().forEach(t => t.stop());
-                stream = null;
-            }
-            document.getElementById('camera-layer').style.display = 'none';
-            document.getElementById('zoom-range').value = 1;
-            document.getElementById('zoom-val').innerText = "1.0";
-            document.getElementById('video').style.transform = "scale(1)";
         }
 
         function clearInput() { document.getElementById('cargoId').value = ''; }
